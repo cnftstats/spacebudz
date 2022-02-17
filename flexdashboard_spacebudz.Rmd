@@ -81,6 +81,7 @@ $(document).ready(function(){
   <li><a href="https://cnftstats.github.io/borgs">BorgsClub</a></li>
   <li><a href="https://cnftstats.github.io/chilledkongs">ChilledKongs</a></li>
   <li><a href="https://cnftstats.github.io/claynation">Clay Nation</a></li>
+  <li><a href="https://cnftstats.github.io/discosolaris">DiscoSolaris</a></li>
   <li><a href="https://cnftstats.github.io/mocossi">Mocossi</a></li>
   <li><a href="https://cnftstats.github.io/pavia">Pavia</a></li>
   <li id="currentProject"><a href="https://cnftstats.github.io/spacebudz">SpaceBudz</a></li>
@@ -270,19 +271,27 @@ ggplotly(gg, tooltip = "text") %>%
 ### Sales x rank
 ```{r}
 max_y <- max(DT[, quantile(price, probs = .90)], DTS[, max(price)])
+min_y <- min(DT[, min(price)], DTS[, min(price)])
 X <- DTS[price <= max_y]
 X[, sold_time := trunc(sold_at_days)]
 X[, sold_time := fcase(trunc(sold_at_days) == 0, "0-24h ago",
                        trunc(sold_at_days) == 1, "24-48h ago",
                        trunc(sold_at_days) == 2, "48-72h ago")]
-gg <- ggplot(X, aes(asset_rank, price, color = sold_time, alpha = sold_time)) +
+scale_x <- c(1, seq(1000, 9000, 1000), 9999)
+gg <- ggplot(X, aes(asset_rank, price, color = sold_time, alpha = sold_time,
+                    text = paste0(asset,
+                                  "</br></br>", paste("Price:", price,
+                                                      "</br>Sold time:", sold_time,
+                                                      "</br>Rank:", asset_rank,
+                                                      "</br>Rarity:", asset_rarity,
+                                                      "</br>Market:", market)))) +
   geom_point(color = "springgreen4") +
-  scale_x_reverse(breaks = scale_x, expand = c(0.03, 0), limits = c(max(scale_x), min(scale_x))) +
-  scale_y_continuous(n.breaks = 15, limits = c(0, max_y)) +
+  scale_x_reverse(breaks = scale_x, expand = c(0.03, 0)) +
+  scale_y_continuous(n.breaks = 15, limits = c(min_y, max_y)) +
   scale_alpha_manual(values = c("0-24h ago" = 1,
                                 "24-48h ago" = 0.6,
                                 "48-72h ago" = 0.2)) +
-  labs(x = "Rank", y = "Sold price", color = "When") +
+  labs(x = "Rank", y = "Sold price", color = "Sold time", alpha = "Sold time") +
   theme(legend.title = element_text(size = 10))
 
 ggplotly(gg, tooltip = "text") %>% 
