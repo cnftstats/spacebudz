@@ -137,7 +137,7 @@ X[price_range >= 25000,                  x_label := "25000+"]
 
 .X <- X[, .(price_range, x_label)] %>% unique %>% .[order(price_range)]
 X[, x_label := factor(x_label, levels = .X$x_label)]
-X[, market  := factor(market, levels = c("spacebudz.io", "jpg.store", "cnft.io"))]
+X[, market  := factor(market, levels = c("spacebudz.io", "jpg.store"))]
 
 ggplot(X, aes(x_label, N, fill = market, alpha = data_when)) +
   facet_grid(data_when~.) +
@@ -145,11 +145,10 @@ ggplot(X, aes(x_label, N, fill = market, alpha = data_when)) +
   geom_text(aes(label = stat(y), group = x_label),
             stat = 'summary', fun = sum, vjust = -.5, hjust = +.55,
             color = "steelblue4", size = 3) +
-  scale_fill_manual(values = c("spacebudz.io" = "steelblue1",
-                               "jpg.store" = "steelblue3", "cnft.io" = "steelblue4")) +
+  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+  scale_fill_manual(values = c("spacebudz.io" = "steelblue3", "jpg.store" = "steelblue4")) +
   scale_alpha_manual(values = c(0.9, 0.7), guide = "none") +
   labs(x = "Price range", y = "Number of listings", fill = "", caption = .caption) +
-  theme_minimal() +
   theme(axis.text.x = element_text(angle = -45, vjust = +.5, hjust = 0,
                                    color = "grey50", size = 8),
         axis.text.y = element_text(color = "grey50", size = 8),
@@ -162,61 +161,57 @@ ggplot(X, aes(x_label, N, fill = market, alpha = data_when)) +
         plot.margin = unit(c(0, 15, 0, 0), units = "pt"))
 ```
 
-### Sales
-```{r eval=nrow(DTS)>0, fig.height=8, fig.width=10}
-X <- copy(DTS)
-X[, sold_time := trunc(sold_at_days)]
-X[, sold_time := fcase(trunc(sold_at_days) == 0, "0-24h ago",
-                       trunc(sold_at_days) == 1, "24-48h ago",
-                       trunc(sold_at_days) == 2, "48-72h ago")]
-X[price %between% c(0,     2999),  price_range := trunc(price/100)*100]
-X[price %between% c(3000,  9999),  price_range := trunc(price/500)*500]
-X[price %between% c(10000, 24999), price_range := trunc(price/5000)*5000]
-X[price >= 25000,                  price_range := 25000]
-X <- X[complete.cases(price_range), .(price_range, price, market, sold_time)]
+<!-- ### Sales -->
+<!-- ```{r eval=nrow(DTS)>0, fig.height=8, fig.width=10} -->
+<!-- X <- copy(DTS) -->
+<!-- X[, sold_time := trunc(sold_at_days)] -->
+<!-- X[, sold_time := fcase(trunc(sold_at_days) == 0, "0-24h ago", -->
+<!--                        trunc(sold_at_days) == 1, "24-48h ago", -->
+<!--                        trunc(sold_at_days) == 2, "48-72h ago")] -->
+<!-- X[price %between% c(0,     2999),  price_range := trunc(price/100)*100] -->
+<!-- X[price %between% c(3000,  9999),  price_range := trunc(price/500)*500] -->
+<!-- X[price %between% c(10000, 24999), price_range := trunc(price/5000)*5000] -->
+<!-- X[price >= 25000,                  price_range := 25000] -->
+<!-- X <- X[complete.cases(price_range), .(price_range, price, market, sold_time)] -->
 
-CAP <- X[, .(sale_range = sprintf("%s-%s", min(price), max(price)),
-             sales = .N, volume = sum(price)/1000), sold_time]
-.caption <- paste0(sprintf("0-24h ago: Sales = %s | Volume = %.0fk", CAP[1, sales], CAP[1, volume]),
-                   sprintf("\n24-48h ago: Sales = %s | Volume = %.0fk", CAP[2, sales], CAP[2, volume]),
-                   sprintf("\n48-72h ago: Sales = %s | Volume = %.0fk",CAP[3, sales], CAP[3, volume]),
-                   "\nSource: https://cnftstats.github.io/")
+<!-- CAP <- X[, .(sale_range = sprintf("%s-%s", min(price), max(price)), -->
+<!--              sales = .N, volume = sum(price)/1000), sold_time] -->
+<!-- .caption <- paste0(sprintf("0-24h ago: Sales = %s | Volume = %.0fk", CAP[1, sales], CAP[1, volume]), -->
+<!--                    sprintf("\n24-48h ago: Sales = %s | Volume = %.0fk", CAP[2, sales], CAP[2, volume]), -->
+<!--                    sprintf("\n48-72h ago: Sales = %s | Volume = %.0fk",CAP[3, sales], CAP[3, volume]), -->
+<!--                    "\nSource: https://cnftstats.github.io/") -->
 
-X <- X[, .N, .(price_range, market, sold_time)][order(price_range)]
-X[price_range %between% c(0,     2999),  x_label := paste0(price_range, "-", price_range + (100-1))]
-X[price_range %between% c(3000,  9999),  x_label := paste0(price_range, "-", price_range + (500-1))]
-X[price_range %between% c(10000, 24999), x_label := paste0(price_range, "-", price_range + (5000-1))]
-X[price_range >= 25000,                  x_label := "25000+"]
+<!-- X <- X[, .N, .(price_range, market, sold_time)][order(price_range)] -->
+<!-- X[price_range %between% c(0,     2999),  x_label := paste0(price_range, "-", price_range + (100-1))] -->
+<!-- X[price_range %between% c(3000,  9999),  x_label := paste0(price_range, "-", price_range + (500-1))] -->
+<!-- X[price_range %between% c(10000, 24999), x_label := paste0(price_range, "-", price_range + (5000-1))] -->
+<!-- X[price_range >= 25000,                  x_label := "25000+"] -->
 
-.X <- X[, .(price_range, x_label)] %>% unique %>% .[order(price_range)]
-X[, x_label := factor(x_label, levels = .X$x_label)]
-X[, market := factor(market, levels = c("jpg.store", "cnft.io"))]
+<!-- .X <- X[, .(price_range, x_label)] %>% unique %>% .[order(price_range)] -->
+<!-- X[, x_label := factor(x_label, levels = .X$x_label)] -->
 
-ggplot(X, aes(x_label, N, fill = market, alpha = sold_time)) +
-  facet_grid(sold_time~.) +
-  geom_hline(yintercept = 0, color = "grey70") +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = stat(y), group = x_label),
-            stat = 'summary', fun = sum, vjust = -.5, hjust = +.55,
-            color = "springgreen4", size = 3) +
-  scale_y_continuous(expand = c(0, 20)) +
-  scale_fill_manual(values = c("jpg.store" = "springgreen3", "cnft.io" = "springgreen4")) +
-  scale_alpha_manual(values = c("0-24h ago" = .9, "24-48h ago" = .8, "48-72h ago" = .7), guide = "none") +
-  labs(x = "Price range", y = "Number of sales", fill = "",
-       caption = .caption) +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = -45, vjust = +.5, hjust = 0,
-                                   color = "grey50", size = 8),
-        axis.text.y = element_text(color = "grey50", size = 8),
-        axis.title = element_text(color = "grey30", size = 10),
-        legend.position = "bottom", legend.justification = 'right', legend.direction = "horizontal",
-        legend.text = element_text(color = "grey50", size = 9),
-        legend.key.height = unit(0.5, "points"), legend.key.width = unit(10, "points"),
-        legend.box.spacing = unit(-10, "points"),
-        plot.caption = element_text(color = "#008B8B", vjust = +17, hjust = 0, size = 9),
-        # plot.margin = unit(c(0, 15, 0, 0), units = "pt"),
-        panel.spacing.y = unit(1, "lines"))
-```
+<!-- ggplot(X, aes(x_label, N, fill = market, alpha = sold_time)) + -->
+<!--   facet_grid(sold_time~.) + -->
+<!--   geom_hline(yintercept = 0, color = "grey70") + -->
+<!--   geom_bar(stat = "identity", fill = "springgreen4") + -->
+<!--   geom_text(aes(label = stat(y), group = x_label), -->
+<!--             stat = 'summary', fun = sum, vjust = -.5, hjust = +.55, -->
+<!--             color = "springgreen4", size = 3) + -->
+<!--   scale_y_continuous(expand = expansion(mult = c(0, .1))) + -->
+<!--   scale_alpha_manual(values = c("0-24h ago" = .9, "24-48h ago" = .8, "48-72h ago" = .7), guide = "none") + -->
+<!--   labs(x = "Price range", y = "Number of sales", fill = "", caption = .caption) + -->
+<!--   theme(axis.text.x = element_text(angle = -45, vjust = +.5, hjust = 0, -->
+<!--                                    color = "grey50", size = 8), -->
+<!--         axis.text.y = element_text(color = "grey50", size = 8), -->
+<!--         axis.title = element_text(color = "grey30", size = 10), -->
+<!--         legend.position = "bottom", legend.justification = 'right', legend.direction = "horizontal", -->
+<!--         legend.text = element_text(color = "grey50", size = 9), -->
+<!--         legend.key.height = unit(0.5, "points"), legend.key.width = unit(10, "points"), -->
+<!--         legend.box.spacing = unit(-10, "points"), -->
+<!--         plot.caption = element_text(color = "#008B8B", vjust = +17, hjust = 0, size = 9), -->
+<!--         # plot.margin = unit(c(0, 15, 0, 0), units = "pt"), -->
+<!--         panel.spacing.y = unit(1, "lines")) -->
+<!-- ``` -->
 
 
 ## Column 2 {data-width=350}
@@ -270,38 +265,38 @@ ggplotly(gg, tooltip = "text") %>%
 
 > Only listings below `r max_y` ada are displayed. Try clicking on the legend or datapoints.
 
-### Sales x rank
-```{r}
-max_y <- max(DT[, quantile(price, probs = .90)], DTS[, max(price)])
-min_y <- min(DT[, min(price)], DTS[, min(price)])
-X <- DTS[price <= max_y]
-X[, sold_time := trunc(sold_at_days)]
-X[, sold_time := fcase(trunc(sold_at_days) == 0, "0-24h ago",
-                       trunc(sold_at_days) == 1, "24-48h ago",
-                       trunc(sold_at_days) == 2, "48-72h ago")]
-scale_x <- c(1, seq(1000, 9000, 1000), 9999)
-gg <- ggplot(X, aes(asset_rank, price, color = sold_time, alpha = sold_time,
-                    text = paste0(asset,
-                                  "</br></br>", paste("Price:", price,
-                                                      "</br>Sold time:", sold_time,
-                                                      "</br>Rank:", asset_rank,
-                                                      "</br>Rarity:", asset_rarity,
-                                                      "</br>Market:", market)))) +
-  geom_point(color = "springgreen4") +
-  scale_x_reverse(breaks = scale_x, expand = c(0.03, 0)) +
-  scale_y_continuous(n.breaks = 15, limits = c(min_y, max_y)) +
-  scale_alpha_manual(values = c("0-24h ago" = 1,
-                                "24-48h ago" = 0.6,
-                                "48-72h ago" = 0.2)) +
-  labs(x = "Rank", y = "Sold price", color = "Sold time", alpha = "Sold time") +
-  theme(legend.title = element_text(size = 10))
+<!-- ### Sales x rank -->
+<!-- ```{r} -->
+<!-- max_y <- max(DT[, quantile(price, probs = .90)], DTS[, max(price)]) -->
+<!-- min_y <- min(DT[, min(price)], DTS[, min(price)]) -->
+<!-- X <- DTS[price <= max_y] -->
+<!-- X[, sold_time := trunc(sold_at_days)] -->
+<!-- X[, sold_time := fcase(trunc(sold_at_days) == 0, "0-24h ago", -->
+<!--                        trunc(sold_at_days) == 1, "24-48h ago", -->
+<!--                        trunc(sold_at_days) == 2, "48-72h ago")] -->
+<!-- scale_x <- c(1, seq(1000, 9000, 1000), 9999) -->
+<!-- gg <- ggplot(X, aes(asset_rank, price, color = sold_time, alpha = sold_time, -->
+<!--                     text = paste0(asset, -->
+<!--                                   "</br></br>", paste("Price:", price, -->
+<!--                                                       "</br>Sold time:", sold_time, -->
+<!--                                                       "</br>Rank:", asset_rank, -->
+<!--                                                       "</br>Rarity:", asset_rarity, -->
+<!--                                                       "</br>Market:", market)))) + -->
+<!--   geom_point(color = "springgreen4") + -->
+<!--   scale_x_reverse(breaks = scale_x, expand = c(0.03, 0)) + -->
+<!--   scale_y_continuous(n.breaks = 15, limits = c(min_y, max_y)) + -->
+<!--   scale_alpha_manual(values = c("0-24h ago" = 1, -->
+<!--                                 "24-48h ago" = 0.6, -->
+<!--                                 "48-72h ago" = 0.2)) + -->
+<!--   labs(x = "Rank", y = "Sold price", color = "Sold time", alpha = "Sold time") + -->
+<!--   theme(legend.title = element_text(size = 10)) -->
 
-ggplotly(gg, tooltip = "text") %>% 
-  layout(legend = list(x = .025, y = .97, bgcolor = 'rgba(255,255,255,0.6)'),
-         xaxis = list(tickangle = 45))
-```
+<!-- ggplotly(gg, tooltip = "text") %>%  -->
+<!--   layout(legend = list(x = .025, y = .97, bgcolor = 'rgba(255,255,255,0.6)'), -->
+<!--          xaxis = list(tickangle = 45)) -->
+<!-- ``` -->
 
-> Only listings below `r max_y` ada are displayed.
+<!-- > Only listings below `r max_y` ada are displayed. -->
 
 ## Column 2 {data-width=400}
 ### Floor listings by rank range
